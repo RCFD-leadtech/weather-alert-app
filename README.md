@@ -1,4 +1,5 @@
-# working on a  weather alert app basic fuctions include an ios and android application that will alert users using the application of severe weather there needs to me a way for *admins* to send push notifications to the users device
+# working on a  weather alert app
+## basic fuctions include an ios and android application that will alert users using the application of severe weather there needs to me a way for *admins* to send push notifications to the users device
 \\
 \\
  it should show active and past events and include the time date and state and city of the event
