@@ -1,0 +1,227 @@
+"use client";
+import React from "react";
+
+function MainComponent() {
+  const [alerts, setAlerts] = React.useState([]);
+  const [adminMode, setAdminMode] = React.useState(false);
+  const [password, setPassword] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
+  const [newAlert, setNewAlert] = React.useState({
+    time: "",
+    date: "",
+    state: "",
+    city: "",
+    event: "",
+    severity: "standard",
+  });
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (password === "RCFDadmin") {
+      setAdminMode(true);
+      setErrorMessage("");
+    } else {
+      setErrorMessage("Invalid password");
+    }
+  };
+
+  const handleNewAlertChange = (e) => {
+    setNewAlert({ ...newAlert, [e.target.name]: e.target.value });
+  };
+
+  const handleNewAlertSubmit = (e) => {
+    e.preventDefault();
+    if (
+      newAlert.time &&
+      newAlert.date &&
+      newAlert.state &&
+      newAlert.city &&
+      newAlert.severity &&
+      newAlert.event
+    ) {
+      fetch("/api/db/alerts", {
+        method: "POST",
+        body: JSON.stringify({
+          query:
+            "INSERT INTO `alerts` (`time`, `date`, `state`, `city`, `event`, `severity`) VALUES (?, ?, ?, ?, ?, ?)",
+          values: [
+            newAlert.time,
+            newAlert.date,
+            newAlert.state,
+            newAlert.city,
+            newAlert.event,
+            newAlert.severity,
+          ],
+        }),
+      }).then(() => {
+        const updatedAlerts = [...alerts, newAlert];
+        setAlerts(updatedAlerts);
+        setErrorMessage("");
+        setNewAlert({
+          time: "",
+          date: "",
+          state: "",
+          city: "",
+          event: "",
+          severity: "standard",
+        });
+        // Code to send push notification to the devices
+      });
+    } else {
+      setErrorMessage("All fields are required");
+    }
+  };
+
+  const handleClearAlerts = () => {
+    fetch("/api/db/alerts", {
+      method: "POST",
+      body: JSON.stringify({
+        query: "DELETE FROM `alerts`",
+      }),
+    }).then(() => {
+      setAlerts([]);
+    });
+  };
+
+  const getAlertClass = (severity) => {
+    if (severity === "critical") return "bg-red-500 text-white";
+    if (severity === "urgent") return "bg-yellow-500 text-white";
+    return "bg-green-500 text-white";
+  };
+
+  return (
+    <div className="min-h-screen p-4 font-roboto bg-gradient-to-r from-blue-600 to-red-600 text-white">
+      <h1 className="text-3xl font-bold mb-4">Severe Weather Alerts</h1>
+
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2">Active and Past Events</h2>
+        <ul className="space-y-2">
+          {alerts.map((alert, index) => (
+            <li
+              key={index}
+              className={`border p-2 rounded shadow ${getAlertClass(
+                alert.severity
+              )}`}
+            >
+              <p>
+                <strong>Event:</strong> {alert.event}
+              </p>
+              <p>
+                <strong>Date:</strong> {alert.date}
+              </p>
+              <p>
+                <strong>Time:</strong> {alert.time}
+              </p>
+              <p>
+                <strong>Location:</strong> {alert.city}, {alert.state}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {!adminMode && (
+        <form onSubmit={handlePasswordSubmit} className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">Admin Login</h2>
+          {errorMessage && (
+            <div className="bg-red-500 text-white p-2 rounded mb-2">
+              {errorMessage}
+            </div>
+          )}
+          <input
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter Admin Password"
+            className="border p-2 rounded w-full mb-2 text-black bg-gray-200"
+          />
+          <button
+            type="submit"
+            className="bg-purple-500 text-white p-2 rounded w-full"
+          >
+            Login
+          </button>
+        </form>
+      )}
+
+      {adminMode && (
+        <div>
+          {errorMessage && (
+            <div className="bg-red-500 text-white p-2 rounded mb-2">
+              {errorMessage}
+            </div>
+          )}
+          <form
+            onSubmit={handleNewAlertSubmit}
+            className="bg-white p-4 rounded shadow-md mb-4 text-black"
+          >
+            <h2 className="text-xl font-semibold mb-2">Send New Alert</h2>
+            <input
+              type="text"
+              name="event"
+              value={newAlert.event}
+              onChange={handleNewAlertChange}
+              placeholder="Event"
+              className="border p-2 rounded w-full mb-2 bg-gray-200"
+            />
+            <input
+              type="date"
+              name="date"
+              value={newAlert.date}
+              onChange={handleNewAlertChange}
+              className="border p-2 rounded w-full mb-2 bg-gray-200"
+            />
+            <input
+              type="time"
+              name="time"
+              value={newAlert.time}
+              onChange={handleNewAlertChange}
+              className="border p-2 rounded w-full mb-2 bg-gray-200"
+            />
+            <input
+              type="text"
+              name="state"
+              value={newAlert.state}
+              onChange={handleNewAlertChange}
+              placeholder="State"
+              className="border p-2 rounded w-full mb-2 bg-gray-200"
+            />
+            <input
+              type="text"
+              name="city"
+              value={newAlert.city}
+              onChange={handleNewAlertChange}
+              placeholder="City"
+              className="border p-2 rounded w-full mb-2 bg-gray-200"
+            />
+            <select
+              name="severity"
+              value={newAlert.severity}
+              onChange={handleNewAlertChange}
+              className="border p-2 rounded w-full mb-2 bg-gray-200"
+            >
+              <option value="standard">Standard</option>
+              <option value="urgent">Urgent</option>
+              <option value="critical">Critical</option>
+            </select>
+            <button
+              type="submit"
+              className="bg-purple-500 text-white p-2 rounded w-full"
+            >
+              Send Alert
+            </button>
+          </form>
+          <button
+            onClick={handleClearAlerts}
+            className="bg-purple-500 text-white p-2 rounded"
+          >
+            Clear Alerts
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default MainComponent;
