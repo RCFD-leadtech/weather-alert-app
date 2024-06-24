@@ -1,3 +1,4 @@
+\\ working on a  weather alert app basic fuctions include an ios and android application that will alert users using the application of severe weather
 "use client";
 import React from "react";
 
